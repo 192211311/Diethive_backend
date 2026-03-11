@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  /* Platinum Design System - Fixed Alignment */
+  --bg-dark: #020617;
+  --bg-surface: #0a0f1e;
+  --primary: #8b5cf6;
+  --primary-glow: rgba(139, 92, 246, 0.4);
+  --secondary: #0ea5e9;
+  --secondary-glow: rgba(14, 165, 233, 0.4);
+  --accent: #f43f5e;
+  --success: #10b981;
+  --warning: #f59e0b;
+
+  --text-pure: #ffffff;
+  --text-soft: #cbd5e1;
+  --text-dim: #94a3b8;
+
+  --sidebar-width: 280px;
+  --header-height: 100px;
+  --radius-super: 24px;
+  --border: rgba(255, 255, 255, 0.08);
+  --ease-lux: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-pure);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+  overflow-y: auto;
+  /* Allow vertical scroll */
+  line-height: 1.6;
+}
+
+/* Atmospheric Background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1), transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.1), transparent 40%);
+  z-index: -2;
+}
+
+/* Main Layout Wrapper */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar - Fixed Position */
+.sidebar {
+  width: var(--sidebar-width);
+  background: rgba(2, 6, 23, 0.95);
+  backdrop-filter: blur(40px);
+  border-right: 1px solid var(--border);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 60px 30px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 26px;
+  font-family: 'Outfit';
+  font-weight: 900;
+  margin-bottom: 50px;
+  color: #fff;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 20px;
+  border-radius: 15px;
+  text-decoration: none;
+  color: var(--text-dim);
+  font-weight: 700;
+  transition: 0.3s;
+}
+
+.nav-link i {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.nav-link.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 20px var(--primary-glow);
+}
+
+/* Main Content Wrapper - Scrollable */
+.main-wrapper {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Container for all sections */
+.container {
+  padding: 60px 80px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Header - Flexible Padding */
+.top-header {
+  height: var(--header-height);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 80px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-title h1 {
+  font-family: 'Outfit';
+  font-size: 32px;
+  font-weight: 900;
+}
+
+/* Improved Profile/Menu Trigger - Removed Bee Image */
+.menu-trigger {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 24px;
+}
+
+.menu-trigger:hover {
+  transform: scale(1.1);
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 20px var(--primary-glow);
+}
+
+/* Cards & Components - NO Cutting */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-super);
+  padding: 40px;
+  transition: 0.4s var(--ease-lux);
+  overflow: visible;
+  /* Ensure content isn't cut */
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.btn-main {
+  background: var(--primary);
+  color: #fff;
+  padding: 16px 35px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-main:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px var(--primary-glow);
+}
+
+/* Menu Overlay - Fixed Depth */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.98);
+  backdrop-filter: blur(50px);
+  z-index: 5000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.overlay.active {
+  display: flex;
+  animation: fadeIn 0.4s both;
+}
+
+.overlay-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.overlay-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  transition: 0.3s;
+}
+
+.overlay-card:hover {
+  background: var(--primary);
+  transform: translateY(-5px);
+}
+
+.overlay-card i {
+  font-size: 32px;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.overlay-card b {
+  font-family: 'Outfit';
+  font-size: 18px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fixes for "Cutting" in Content */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.2;
+}
+
+p {
+  margin-bottom: 15px;
+}
+
+/* Scrollbar Styling for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}

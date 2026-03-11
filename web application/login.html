@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launch Session | DietHive</title>
+    <link rel="stylesheet" href="global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .split-pane {
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .visual-side {
+            flex: 1.2;
+            background: linear-gradient(135deg, var(--bg-dark), var(--bg-surface));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 100px;
+            border-right: 1px solid var(--border);
+        }
+
+        .visual-side h2 {
+            font-family: 'Outfit';
+            font-size: 80px;
+            font-weight: 950;
+            letter-spacing: -4px;
+            line-height: 0.85;
+            margin-bottom: 30px;
+        }
+
+        .visual-icon {
+            font-size: 200px;
+            color: var(--primary);
+            filter: drop-shadow(0 0 50px var(--primary-glow));
+            margin-bottom: 40px;
+        }
+
+        .form-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 120px;
+            background: #fff;
+            color: #000;
+        }
+
+        .form-header {
+            margin-bottom: 60px;
+        }
+
+        .form-header h1 {
+            font-family: 'Outfit';
+            font-size: 48px;
+            font-weight: 950;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            font-size: 18px;
+            color: #666;
+            font-weight: 700;
+        }
+
+        .input-wrap {
+            margin-bottom: 30px;
+        }
+
+        .input-wrap label {
+            display: block;
+            font-size: 11px;
+            font-weight: 950;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .login-field {
+            width: 100%;
+            padding: 20px 25px;
+            border: 2px solid #eee;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+
+        .login-field:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .social-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 18px;
+            border: 2px solid #eee;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: 800;
+            text-decoration: none;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .social-btn:hover {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="split-pane">
+        <div class="visual-side">
+            <div class="visual-icon"><i class="fa-solid fa-rocket"></i></div>
+            <h2>DIETHIVE<br>CONSOLE</h2>
+            <p style="text-align:center; font-size:18px; color:var(--text-soft); font-weight:600; max-width:400px;">
+                Begin your daily synchronization and performance tracking.</p>
+        </div>
+
+        <div class="form-side">
+            <div class="form-header">
+                <h1>Launch Session</h1>
+                <p>Welcome to the Elite Tier.</p>
+            </div>
+
+            <form action="home.html">
+                <div class="input-wrap">
+                    <label>Neural Identity</label>
+                    <input type="text" class="login-field" placeholder="Username / Email" required>
+                </div>
+                <div class="input-wrap">
+                    <label>Access Protocol</label>
+                    <input type="password" class="login-field" placeholder="Secret Key" required>
+                </div>
+
+                <button class="btn-main" style="width:100%; padding:22px; margin-top:20px;">AUTHORIZE SESSION</button>
+            </form>
+
+            <div class="social-grid">
+                <a href="#" class="social-btn"><i class="fa-brands fa-google" style="color:#EA4335"></i> GOOGLE</a>
+                <a href="#" class="social-btn"><i class="fa-brands fa-apple"></i> APPLE ID</a>
+            </div>
+
+            <p style="margin-top:60px; font-size:14px; color:#888; font-weight:700; text-align:center;">
+                New Architect? <a href="#" style="color:var(--primary); text-decoration:none;">Apply for Access</a>
+            </p>
+        </div>
+    </div>
+
+</body>
+
+</html>

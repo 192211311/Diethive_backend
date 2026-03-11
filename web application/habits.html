@@ -1,0 +1,479 @@
+    <style>
+        .habit-header {
+            margin-bottom: 50px;
+        }
+
+        .habit-header h2 {
+            font-family: 'Outfit';
+            font-size: 48px;
+            font-weight: 950;
+            margin-bottom: 10px;
+        }
+
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .habit-item {
+            background: var(--bg-surface);
+            padding: 40px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .habit-item:hover {
+            transform: translateX(10px);
+            border-color: var(--primary);
+        }
+
+        .h-main {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .h-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .h-title h3 {
+            font-family: 'Outfit';
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        .h-title p {
+            font-size: 14px;
+            color: var(--text-dim);
+            font-weight: 700;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .h-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .streak-bubble {
+            padding: 8px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            font-weight: 900;
+            font-size: 12px;
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .complete-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border);
+            color: transparent;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .complete-btn:hover {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .complete-btn.done {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        /* MODAL STYLES */
+        .quest-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .quest-overlay.active {
+            display: flex;
+        }
+
+        .quest-modal {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 50px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .quest-days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .day-box {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        .day-box.locked {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .day-box.unlocked {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .day-box.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .day-box:hover:not(.locked):not(.completed) {
+            transform: translateY(-5px);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .day-num {
+            font-size: 24px;
+            font-weight: 950;
+            font-family: 'Outfit';
+        }
+
+        .day-status {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .close-modal {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo"><i class="fa-solid fa-rocket" style="color:var(--primary)"></i> DietHive</div>
+            <nav class="nav-links">
+                <a href="home.html" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
+                <a href="library.html" class="nav-link"><i class="fa-solid fa-book-open"></i> Library</a>
+                <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                <a href="people_progress.html" class="nav-link"><i class="fa-solid fa-users"></i> People's Progress</a>
+                <a href="profile.html" class="nav-link"><i class="fa-solid fa-user"></i> Profile</a>
+            </nav>
+        </aside>
+
+        <section class="main-wrapper">
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>MY HABITS</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="menu-trigger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+                </div>
+            </header>
+
+            <div class="container">
+                <div class="habit-header">
+                    <h2>Active Trajectories</h2>
+                    <p style="color:var(--text-soft); font-weight:600; font-size:18px;">Mark your daily completions to
+                        maintain synchronization.</p>
+                </div>
+
+                <div class="habit-list" id="habitList">
+                    <!-- Dynamic Quests Injected Here -->
+                    <div style="padding: 40px; text-align: center; color: var(--text-dim); font-weight: 700;">
+                        Synchronizing with neural database...
+                    </div>
+                </div>
+
+                <a href="choose_goal.html" class="btn-main" style="margin-top: 50px;"><i class="fa-solid fa-plus"></i>
+                    ADD NEW HABIT</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Quest Detail Modal -->
+    <div class="quest-overlay" id="questOverlay">
+        <div class="quest-modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalTitle" style="font-family:'Outfit'; font-size:38px; font-weight:950; line-height:1;">Quest Details</h2>
+                    <p id="modalSubtitle" style="color:var(--text-soft); font-weight:600; margin-top:10px;">Tracking individual synchronization days.</p>
+                </div>
+                <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="quest-days-grid" id="questDaysGrid"></div>
+        </div>
+    </div>
+
+    <!-- Menu Overlay -->
+    <div class="overlay" id="menuOverlay">
+        <button
+            style="position:fixed; top:50px; right:50px; background:rgba(255,255,255,0.1); border:none; width:70px; height:70px; border-radius:24px; color:#fff; cursor:pointer; font-size:30px;"
+            onclick="toggleMenu()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="overlay-grid">
+            <a href="about.html" class="overlay-card"><i class="fa-solid fa-info-circle"></i><b>About App</b></a>
+            <a href="streak.html" class="overlay-card"><i class="fa-solid fa-trophy"
+                    style="color:var(--warning)"></i><b>Trophy Room</b></a>
+            <a href="library.html" class="overlay-card"><i class="fa-solid fa-book-open"></i><b>Library</b></a>
+            <a href="buddybot.html" class="overlay-card"><i class="fa-solid fa-robot"
+                    style="color:var(--success)"></i><b>Buddy Bot</b></a>
+            <a href="people_progress.html" class="overlay-card"><i class="fa-solid fa-users"
+                    style="color:var(--secondary)"></i><b>People's Progress</b></a>
+            <a href="notifications.html" class="overlay-card"><i class="fa-solid fa-bell"></i><b>Notifications</b></a>
+            <a href="settings.html" class="overlay-card"><i class="fa-solid fa-cog"></i><b>Settings</b></a>
+        </div>
+    </div>
+
+    <script src="buddy.js"></script>
+    <script>
+        const API_BASE = ""; // Relative if backend is same origin
+        const USER_ID = 15; // From hint fix_user_15.py
+
+        const habitList = document.getElementById('habitList');
+        const questOverlay = document.getElementById('questOverlay');
+        const questDaysGrid = document.getElementById('questDaysGrid');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModal = document.getElementById('closeModal');
+
+        let allGoals = [];
+
+        function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('active'); }
+
+        async function fetchGoals() {
+            try {
+                const res = await fetch(`${API_BASE}/my-goals?user_id=${USER_ID}`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    allGoals = data.goals;
+                    renderGoals();
+                } else {
+                    habitList.innerHTML = `<div style="color:var(--accent); font-weight:700;">Error: ${data.message}</div>`;
+                }
+            } catch (err) {
+                habitList.innerHTML = `<div style="color:var(--accent); font-weight:700;">Database connection failed.</div>`;
+                console.error(err);
+            }
+        }
+
+        function getUnlockedCount(goal) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Parse YYYY-MM-DD reliably
+            const parts = goal.start_date.split('-');
+            const start = new Date(parts[0], parts[1] - 1, parts[2]);
+            start.setHours(0,0,0,0);
+
+            const diffTime = today - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return 0;
+            return Math.min(goal.total_days, diffDays + 1);
+        }
+
+        function renderGoals() {
+            habitList.innerHTML = '';
+            if (allGoals.length === 0) {
+                habitList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:40px;">No active trajectories found. Start one today!</div>';
+                return;
+            }
+
+            allGoals.forEach(g => {
+                const unlocked = getUnlockedCount(g);
+                const completedCount = g.tracking.filter(t => t.completed).length;
+                const currentDay = unlocked > g.total_days ? g.total_days : unlocked;
+
+                const item = document.createElement('div');
+                item.className = 'habit-item';
+                item.innerHTML = `
+                    <div class="h-main">
+                        <div class="h-icon" style="color: ${g.category === 'DIET' ? 'var(--primary)' : 'var(--secondary)'}; background: ${g.category === 'DIET' ? 'rgba(139,92,246,0.1)' : 'rgba(14,165,233,0.1)'}">
+                            <i class="fa-solid ${g.icon || 'fa-star'}"></i>
+                        </div>
+                        <div class="h-title">
+                            <h3>${g.title}</h3>
+                            <p>Progress: Day ${currentDay} of ${g.total_days}</p>
+                        </div>
+                    </div>
+                    <div class="h-actions">
+                        <div class="streak-bubble"><i class="fa-solid fa-fire"></i> ${completedCount} DAYS DONE</div>
+                        <button class="complete-btn ${isDayCompleted(g, currentDay) ? 'done' : ''}">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                `;
+                item.onclick = (e) => {
+                    if (e.target.closest('.complete-btn')) {
+                        handleCheckIn(g, currentDay);
+                    } else {
+                        openQuestDetails(g);
+                    }
+                };
+                habitList.appendChild(item);
+            });
+        }
+
+        function isDayCompleted(goal, dayNum) {
+            return goal.tracking.some(t => t.day_number === dayNum && t.completed);
+        }
+
+        function openQuestDetails(goal) {
+            modalTitle.textContent = goal.title;
+            questDaysGrid.innerHTML = '';
+            questOverlay.classList.add('active');
+
+            const unlocked = getUnlockedCount(goal);
+            const parts = goal.start_date.split('-');
+            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+            for (let i = 1; i <= goal.total_days; i++) {
+                const isLocked = i > unlocked;
+                const isDone = isDayCompleted(goal, i);
+                
+                const box = document.createElement('div');
+                box.className = `day-box ${isLocked ? 'locked' : 'unlocked'} ${isDone ? 'completed' : ''}`;
+                
+                const unlockDate = new Date(startDate);
+                unlockDate.setDate(startDate.getDate() + (i - 1));
+                const dateStr = unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                box.innerHTML = `
+                    <div class="day-num">Day ${i}</div>
+                    <div class="day-status">${isLocked ? 'Locked' : (isDone ? 'COMPLETED' : dateStr)}</div>
+                `;
+
+                box.onclick = () => {
+                    if (isLocked) {
+                        alert(`Day ${i} will unlock on ${dateStr}`);
+                    } else if (!isDone) {
+                        handleCheckIn(goal, i);
+                    }
+                };
+                questDaysGrid.appendChild(box);
+            }
+        }
+
+        async function handleCheckIn(goal, dayNum) {
+            const unlocked = getUnlockedCount(goal);
+            if (dayNum > unlocked) {
+                const parts = goal.start_date.split('-');
+                const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                const unlockDate = new Date(startDate);
+                unlockDate.setDate(startDate.getDate() + (dayNum - 1));
+                alert(`Access Denied. Day ${dayNum} will unlock tomorrow (${unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}).`);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/goals/track-day`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: USER_ID,
+                        goal_id: goal.goal_id,
+                        day_number: dayNum,
+                        completed: true
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    Buddy.celebrate();
+                    fetchGoals(); // Refresh
+                    if (questOverlay.classList.contains('active')) {
+                        // Optimistically update tracking for modal if found
+                        const g = allGoals.find(x => x.goal_id === goal.goal_id);
+                        if (g) {
+                            if (!g.tracking.some(t => t.day_number === dayNum)) {
+                                g.tracking.push({ day_number: dayNum, completed: true });
+                            } else {
+                                g.tracking.find(t => t.day_number === dayNum).completed = true;
+                            }
+                            openQuestDetails(g); // Re-render modal
+                        }
+                    }
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert("Synchronization failed. Check neural link.");
+            }
+        }
+
+        closeModal.onclick = () => questOverlay.classList.remove('active');
+        questOverlay.onclick = (e) => { if (e.target === questOverlay) questOverlay.classList.remove('active'); };
+
+        fetchGoals();
+    </script>
+</body>
+
+</html>
