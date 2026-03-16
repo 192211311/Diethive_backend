@@ -186,11 +186,73 @@
   <script>
     // Get Goal from URL
     const params = new URLSearchParams(window.location.search);
-    const goal = params.get('goal') || "Custom Habit";
-    document.getElementById('goalName').innerText = goal;
+    const goalName = params.get('goal') || "Custom Habit";
+    const habitIDParam = params.get('habit_id');
+    document.getElementById('goalName').innerText = goalName;
+
+    // Hardcoded mapping for demonstration (Fallbacks)
+    const GOAL_MAPPING = {
+        "3L Water Intake": 1,
+        "Zero Sugar": 4, 
+        "Protein Focus": 13,
+        "Intermittent Fast": 16,
+        "10k Daily Steps": 27,
+        "Morning Yoga": 44,
+        "Deep Sleep": 52,
+        "Strength Training": 37,
+        "Digital Detox": 51,
+        "Daily Meditation": 49,
+        "Daily Gratitude": 50,
+        "Read 20 Pages": 53
+    };
+
+    let durationWeeks = 1;
+    const optBoxes = document.querySelectorAll('.opt-box');
+    optBoxes.forEach(box => {
+        box.onclick = () => {
+            optBoxes.forEach(b => b.classList.remove('active'));
+            box.classList.add('active');
+            durationWeeks = parseInt(box.innerText.split(' ')[0]) / 7;
+            if (durationWeeks < 1) durationWeeks = 1; 
+        };
+    });
 
     function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('active'); }
-    function activate() { window.location.href = 'habits.html'; }
+
+    async function activate() {
+        const userID = localStorage.getItem('user_id');
+        if (!userID) {
+            alert("No user session. Please login.");
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const habitID = habitIDParam || GOAL_MAPPING[goalName] || 1; 
+        const marksPerDay = 10; 
+
+        try {
+            const res = await fetch('/goals/activate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userID,
+                    habit_id: habitID,
+                    marks_per_day: 10, // Default to 10 for consistency with points system
+                    duration_weeks: Math.max(1, Math.round(durationWeeks)),
+                    start_date: new Date().toLocaleDateString('sv-SE')
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                window.location.href = 'habits.html';
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Activation failed.");
+        }
+    }
   </script>
 </body>
 

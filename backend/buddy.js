@@ -25,17 +25,7 @@ const Buddy = {
     container.id = 'buddy-container';
     container.innerHTML = `
       <div id="buddy-character">
-        <div class="buddy-body">
-          <div class="buddy-eyes">
-            <div class="buddy-eye left"></div>
-            <div class="buddy-eye right"></div>
-          </div>
-          <div class="buddy-smile"></div>
-        </div>
-        <div class="buddy-hands">
-            <div class="buddy-hand left"></div>
-            <div class="buddy-hand right"></div>
-        </div>
+        <img src="/avatars/avatar_f2.png" alt="Buddy Bot">
       </div>
       <div id="buddy-bubble" class="hidden">Hello!</div>
     `;
@@ -67,73 +57,31 @@ const Buddy = {
         pointer-events: none;
       }
       #buddy-character {
-        width: 70px;
-        height: 70px;
-        background: radial-gradient(circle at 30% 30%, #FFEB3B, #F9A825);
+        width: 75px;
+        height: 75px;
+        background: linear-gradient(135deg, #1e1e2f, #0a0f1e);
         border-radius: 50%;
         position: relative;
-        box-shadow: 0 10px 25px rgba(249, 168, 37, 0.4), inset -5px -5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.6), 0 0 0 2px rgba(139, 92, 246, 0.3);
         cursor: pointer;
         pointer-events: auto;
         animation: float 4s ease-in-out infinite;
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        border: 3px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
       }
       #buddy-character:hover {
-        transform: scale(1.1) rotate(5deg);
+        transform: scale(1.1) translateY(-5px);
+        box-shadow: 0 15px 40px rgba(14, 165, 233, 0.7), 0 0 0 3px rgba(14, 165, 233, 0.5);
       }
-      .buddy-eyes {
-        position: absolute;
-        top: 22px;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: center;
-        gap: 14px;
-      }
-      .buddy-eye {
-        width: 10px;
-        height: 10px;
-        background: #2c3e50;
-        border-radius: 50%;
-        animation: blink 5s infinite;
-        position: relative;
-      }
-      .buddy-eye::after {
-          content: "";
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 3px;
-          height: 3px;
-          background: white;
-          border-radius: 50%;
-      }
-      .buddy-smile {
-        position: absolute;
-        bottom: 16px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 24px;
-        height: 12px;
-        border-bottom: 4px solid #2c3e50;
-        border-radius: 0 0 15px 15px;
-      }
-      .buddy-hand {
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        background: #F9A825;
-        border-radius: 50%;
-        bottom: 8px;
-        border: 2px solid white;
-      }
-      .buddy-hand.left { left: -8px; animation: wave 3s infinite ease-in-out; }
-      .buddy-hand.right { right: -8px; }
-
-      @keyframes wave {
-          0%, 100% { transform: rotate(0); }
-          50% { transform: translateY(-5px) rotate(-20deg); }
+      #buddy-character img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        transform: scale(1.15); /* Zoom in slightly for better portrait focus */
       }
 
       #buddy-bubble {
@@ -166,10 +114,6 @@ const Buddy = {
       @keyframes float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
-      }
-      @keyframes blink {
-        0%, 90%, 100% { transform: scaleY(1); }
-        95% { transform: scaleY(0.1); }
       }
     `;
     document.head.appendChild(style);

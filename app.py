@@ -19,18 +19,19 @@
 
 import re
 import secrets
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import pymysql
 from datetime import datetime, timedelta, date
 import random
 from flask_mail import Mail, Message
 from apscheduler.schedulers.background import BackgroundScheduler
+import google.generativeai as genai
 
 # ==========================================================
 # ✅ APP INIT
 # ==========================================================
-app = Flask(__name__)
+app = Flask(__name__, static_folder='backend', static_url_path='')
 app.secret_key = "supersecretkey"
 
 # ==========================================================
@@ -56,6 +57,20 @@ def get_db_connection():
             port=3306,
             cursorclass=pymysql.cursors.DictCursor
         )
+        
+        # Auto-create OTP columns if they don't exist
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SHOW COLUMNS FROM register LIKE 'otp'")
+                if not cursor.fetchone():
+                    cursor.execute("ALTER TABLE register ADD COLUMN otp VARCHAR(10) NULL")
+                cursor.execute("SHOW COLUMNS FROM register LIKE 'otp_expiry'")
+                if not cursor.fetchone():
+                    cursor.execute("ALTER TABLE register ADD COLUMN otp_expiry DATETIME NULL")
+            conn.commit()
+        except:
+            pass
+            
         return conn
     except Exception as e:
         print("❌ Error while connecting to MySQL:", e)
@@ -134,7 +149,7 @@ def _block_if_buddy_mode():
 # ==========================================================
 @app.route("/", methods=["GET"])
 def health_check():
-    return jsonify({"status": "success", "message": "Diethive backend running ✅"}), 200
+    return send_from_directory(app.static_folder, 'index.html')
 
 # ==========================================================
 # ✅ REGISTER
@@ -904,15 +919,33 @@ def delete_goal_by_id(goal_id):
     try:
         with conn.cursor() as cursor:
             # Check goal belongs to user
-            cursor.execute("SELECT id FROM user_goals WHERE id=%s AND user_id=%s", (goal_id, user_id))
-            if not cursor.fetchone():
+            cursor.execute("SELECT id, habit_id FROM user_goals WHERE id=%s AND user_id=%s", (goal_id, user_id))
+            goal = cursor.fetchone()
+            if not goal:
                 return jsonify({"status": "error", "message": "Goal not found or unauthorized"}), 403
             
-            cursor.execute("DELETE FROM user_goals WHERE id=%s", (goal_id,))
+            habit_id = goal["habit_id"]
+            
+            # Delete tracking and goal
             cursor.execute("DELETE FROM goal_daily_tracking WHERE goal_id=%s", (goal_id,))
+            cursor.execute("DELETE FROM user_goals WHERE id=%s", (goal_id,))
+            
+            # If it's a custom habit, check if we should delete the habit itself
+            cursor.execute("SELECT created_by_user_id FROM habits WHERE id=%s", (habit_id,))
+            habit_info = cursor.fetchone()
+            if habit_info and habit_info["created_by_user_id"] is not None:
+                # Check if any other goal still uses this habit
+                cursor.execute("SELECT id FROM user_goals WHERE habit_id=%s", (habit_id,))
+                if not cursor.fetchone():
+                    # No other goals use it, delete the habit too
+                    cursor.execute("DELETE FROM habits WHERE id=%s", (habit_id,))
+            
             conn.commit()
+            
+            # Recalculate progress after deletion
+            _recalculate_progress(conn, user_id)
 
-        return jsonify({"status": "success", "message": "Goal deleted successfully"}), 200
+        return jsonify({"status": "success", "message": "Goal and related data deleted successfully"}), 200
     finally:
         conn.close()
 
@@ -980,8 +1013,9 @@ def get_profile():
     email = (request.args.get("email") or "").strip()
     user_id_param = _to_int(request.args.get("user_id"))
 
+    # If no API params provided, the user is navigating via browser — serve the HTML page
     if not email and not user_id_param:
-        return jsonify({"status": "error", "message": "email or user_id is required"}), 400
+        return send_from_directory(app.static_folder, 'profile.html')
 
     conn = get_db_connection()
     if not conn:
@@ -1441,8 +1475,92 @@ def streak_remove():
         }), 200
     finally:
         conn.close()
+from flask import redirect
 
+@app.before_request
+def redirect_html():
+    # Redirect .html URLs to clean URLs (strips .html from address bar)
+    if request.path.endswith('.html'):
+        clean = request.path[:-5]  # e.g. /habits.html → /habits
+        # /habits clashes with API; /profile now serves HTML directly
+        if clean == '/habits':
+            return redirect('/habits_page', code=301)
+        return redirect(clean, code=301)
 
+# --------------------------------------------------
+# Web Render
+# --------------------------------------------------
+@app.route("/index", methods=["GET"])
+def index(): return send_from_directory(app.static_folder, 'index.html')
+
+@app.route("/about", methods=["GET"])
+def page_about(): return send_from_directory(app.static_folder, 'about.html')
+
+@app.route("/buddybot", methods=["GET"])
+def page_buddybot(): return send_from_directory(app.static_folder, 'buddybot.html')
+
+@app.route("/calendar", methods=["GET"])
+def page_calendar(): return send_from_directory(app.static_folder, 'calendar.html')
+
+@app.route("/choose_goal", methods=["GET"])
+def page_choose_goal(): return send_from_directory(app.static_folder, 'choose_goal.html')
+
+@app.route("/community", methods=["GET"])
+def page_community(): return send_from_directory(app.static_folder, 'community.html')
+
+@app.route("/d", methods=["GET"])
+def page_d(): return send_from_directory(app.static_folder, 'd.html')
+
+@app.route("/dashboard", methods=["GET"])
+def page_dashboard(): return send_from_directory(app.static_folder, 'dashboard.html')
+
+@app.route("/edit_info", methods=["GET"])
+def page_edit_info(): return send_from_directory(app.static_folder, 'edit_info.html')
+
+@app.route("/forgot_password", methods=["GET"])
+def page_forgot_password(): return send_from_directory(app.static_folder, 'forgot_password.html')
+
+@app.route("/goalpage", methods=["GET"])
+def page_goalpage(): return send_from_directory(app.static_folder, 'goalpage.html')
+
+@app.route("/h", methods=["GET"])
+def page_h(): return send_from_directory(app.static_folder, 'h.html')
+
+@app.route("/habits_page", methods=["GET"])
+def page_habits(): return send_from_directory(app.static_folder, 'habits.html')
+
+@app.route("/home", methods=["GET"])
+def page_home(): return send_from_directory(app.static_folder, 'home.html')
+
+@app.route("/library", methods=["GET"])
+def page_library(): return send_from_directory(app.static_folder, 'library.html')
+
+@app.route("/login", methods=["GET"])
+def page_login(): return send_from_directory(app.static_folder, 'login.html')
+
+@app.route("/notifications", methods=["GET"])
+def page_notifications(): return send_from_directory(app.static_folder, 'notifications.html')
+
+@app.route("/people_progress", methods=["GET"])
+def page_people_progress(): return send_from_directory(app.static_folder, 'people_progress.html')
+
+@app.route("/privacy", methods=["GET"])
+def page_privacy(): return send_from_directory(app.static_folder, 'privacy.html')
+
+@app.route("/profile_page", methods=["GET"])
+def page_profile(): return send_from_directory(app.static_folder, 'profile.html')
+
+@app.route("/progress", methods=["GET"])
+def page_progress(): return send_from_directory(app.static_folder, 'progress.html')
+
+@app.route("/settings", methods=["GET"])
+def page_settings(): return send_from_directory(app.static_folder, 'settings.html')
+
+@app.route("/signup", methods=["GET"])
+def page_signup(): return send_from_directory(app.static_folder, 'signup.html')
+
+@app.route("/streak", methods=["GET"])
+def page_streak(): return send_from_directory(app.static_folder, 'streak.html')
 # --------------------------------------------------
 # Notifications 
 # --------------------------------------------------
@@ -1528,7 +1646,7 @@ def get_notifications():
         return jsonify({"status": "error", "message": "user_id is required"}), 400
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     try:
         cursor.execute("""
             SELECT id, title, message, time_value as time, type, is_unread 
@@ -1569,7 +1687,7 @@ def process_notifications():
     
     conn = get_db_connection()
     if not conn: return
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     try:
         # Daily Reminders
         cursor.execute("""
@@ -1623,7 +1741,7 @@ def debug_notifications():
     from datetime import datetime # Import datetime here as well for this function
     conn = get_db_connection()
     if not conn: return jsonify({"error": "DB connection failed"}), 500
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     try:
         cursor.execute("SELECT * FROM user_notifications")
         user_notifs = cursor.fetchall()
@@ -1659,6 +1777,79 @@ def test_notification():
     
     insert_notification(user_id, "Test Alert", "This is a test notification from the server!", "test")
     return jsonify({"status": "success", "message": "Test notification created"})
+
+# ==========================================================
+# ✅ BUDDY BOT CHAT (GEMINI)
+# ==========================================================
+genai.configure(api_key="AIzaSyB3RVX6uLrvyz0cT5aovJjYD-cBhE4IQCw")
+
+BUDDY_SYSTEM_PROMPT = """
+You are "Buddy", a super-friendly, encouraging, and professional AI companion for DietHive. Your sole mission is to support users with Diet, Fitness, and Motivation.
+
+PERSONALITY TRAITS:
+- Exceptionally warm, supportive, and human-like.
+- Always use a positive, "best friend" tone.
+- Use emojis frequently to stay engaging (💪, ❤️, 🚀, 🥗, 💦, ✨).
+
+TOPIC FOCUS (ONLY ANSWER THESE):
+1. DIET & NUTRITION: Healthy eating, meal ideas, macro advice, hydration, and nutrition tips.
+2. FITNESS & EXERCISE: Workout routines, gym advice, yoga, steps, and physical performance.
+3. MOTIVATION & HABITS: Discipline, overcoming laziness, building better routines, and mental toughness.
+
+STRICT TOPIC RESTRICTION:
+- If a user asks about anything outside Diet, Fitness, or Motivation (e.g., coding, news, celebrities, science, etc.), YOU MUST DECLINE.
+- Refusal Style: "Hey buddy! ❤️ I'm your dedicated coach for diet, fitness, and motivation. I don't really know much about other topics, but I'd love to help you with your health goals today! What's on your mind? 💪"
+
+SAFETY & GUIDELINES:
+- No medical diagnoses.
+- Keep responses concise, clear, and motivational.
+- If user greets you, say "Hey buddy! I'm here to help you with your diet and fitness journey! 🚀"
+"""
+
+@app.route("/buddy/chat", methods=["POST"])
+def buddy_chat():
+    data = request.get_json(silent=True) or {}
+    user_message = data.get("message", "").strip()
+    history = data.get("history", []) # Expected format: [{"role": "user", "parts": ["..."]}, {"role": "model", "parts": ["..."]}]
+
+    if not user_message:
+        return jsonify({"status": "error", "message": "Message is required"}), 400
+
+    try:
+        model = genai.GenerativeModel(
+            model_name="models/gemini-2.0-flash",
+            system_instruction=BUDDY_SYSTEM_PROMPT
+        )
+        chat = model.start_chat(history=history)
+        response = chat.send_message(user_message)
+        
+        return jsonify({
+            "status": "success",
+            "reply": response.text,
+            "history": history + [
+                {"role": "user", "parts": [user_message]},
+                {"role": "model", "parts": [response.text]}
+            ]
+        }), 200
+    except Exception as e:
+        print(f"Buddy Chat Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def insert_notification(user_id, title, message, notif_type="general"):
+    conn = get_db_connection()
+    if not conn: return
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO notifications (user_id, title, message, type, is_unread)
+            VALUES (%s, %s, %s, %s, 1)
+        """, (user_id, title, message, notif_type))
+        conn.commit()
+    except Exception as e:
+        print(f"Error inserting notification: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 # ==========================================================
 # ✅ RUN SERVER

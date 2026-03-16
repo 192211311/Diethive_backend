@@ -9,59 +9,62 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         .page-hero {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent);
-            padding: 80px;
-            border-radius: 40px;
+            background: linear-gradient(135deg, rgba(245,158,11,0.1), transparent);
+            padding: clamp(24px,5vw,80px);
+            border-radius: clamp(20px,4vw,40px);
             border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 50px;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .page-hero h2 {
-            font-family: 'Outfit';
-            font-size: 56px;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(28px,5vw,56px);
             font-weight: 950;
         }
 
+        .page-hero p { font-size: clamp(13px,2vw,18px); }
+
+        .page-hero-icon { font-size: clamp(56px,8vw,100px); color: var(--warning); }
+
         .trophy-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: clamp(14px,2.5vw,30px);
         }
 
         .trophy-card {
             background: var(--bg-surface);
-            padding: 50px 30px;
-            border-radius: 40px;
+            padding: clamp(28px,4vw,50px) clamp(18px,3vw,30px);
+            border-radius: clamp(20px,3vw,40px);
             text-align: center;
             border: 1px solid var(--border);
             transition: 0.4s;
             position: relative;
         }
 
-        .trophy-card.locked {
-            opacity: 0.4;
-            filter: grayscale(1);
-        }
+        .trophy-card.locked { opacity: 0.4; filter: grayscale(1); }
 
         .trophy-card i {
-            font-size: 80px;
-            margin-bottom: 25px;
+            font-size: clamp(48px,7vw,80px);
+            margin-bottom: 20px;
             color: var(--warning);
             display: block;
         }
 
         .trophy-card h3 {
-            font-family: 'Outfit';
-            font-size: 26px;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(18px,2.5vw,26px);
             font-weight: 900;
             margin-bottom: 5px;
         }
 
         .trophy-card p {
-            font-size: 13px;
+            font-size: clamp(10px,1.5vw,13px);
             color: var(--text-soft);
             font-weight: 800;
             text-transform: uppercase;
@@ -70,11 +73,9 @@
 
         .lock-badge {
             position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.4);
+            top: 18px; right: 18px;
+            width: 36px; height: 36px;
+            background: rgba(0,0,0,0.4);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -115,7 +116,7 @@
                         <p style="font-size:18px; color:var(--text-soft); font-weight:600; margin-top:10px;">Master your
                             habits to unlock prestigious trophies.</p>
                     </div>
-                    <div style="font-size: 100px; color: var(--warning);"><i class="fa-solid fa-award"></i></div>
+                    <div class="page-hero-icon"><i class="fa-solid fa-award"></i></div>
                 </section>
 
                 <div class="trophy-grid">
@@ -170,7 +171,47 @@
 
     <script>
         function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('active'); }
+
+        async function fetchTrophies() {
+            const userID = localStorage.getItem('user_id');
+            if (!userID) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/trophy-room?user_id=${userID}`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const grid = document.querySelector('.trophy-grid');
+                    grid.innerHTML = '';
+                    data.trophies.forEach(t => {
+                        const card = document.createElement('div');
+                        card.className = `trophy-card ${t.unlocked ? '' : 'locked'}`;
+                        card.innerHTML = `
+                            <div style="font-size: 80px; margin-bottom: 25px;">${t.icon}</div>
+                            <h3>${t.name}</h3>
+                            <p>${t.description}</p>
+                            ${t.unlocked ? '' : '<div class="lock-badge"><i class="fa-solid fa-lock"></i></div>'}
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                console.error("Trophy sync failed", err);
+            }
+        }
+        fetchTrophies();
     </script>
+
+    <!-- Mobile bottom nav -->
+    <nav class="mobile-nav">
+        <a href="home.html" class="mobile-nav-link"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <a href="library.html" class="mobile-nav-link"><i class="fa-solid fa-book-open"></i><span>Library</span></a>
+        <a href="dashboard.html" class="mobile-nav-link"><i class="fa-solid fa-chart-line"></i><span>Stats</span></a>
+        <a href="people_progress.html" class="mobile-nav-link"><i class="fa-solid fa-users"></i><span>People</span></a>
+        <a href="profile.html" class="mobile-nav-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
 </body>
 
 </html>

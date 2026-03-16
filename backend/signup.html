@@ -341,25 +341,41 @@
     </section>
   </div>
 
-  <script src="buddy.js"></script>
-  <script>
-    document.getElementById('signupForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const pass = document.getElementById('password').value;
-      const confirm = document.getElementById('confirm').value;
+    <script src="buddy.js"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const full_name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm').value;
 
-      if (pass.length < 6) { alert("Access Key too short!"); return; }
-      if (pass !== confirm) { alert("Access Keys do not match!"); return; }
+            if (password !== confirm_password) {
+                alert("Passwords do not match!");
+                return;
+            }
 
-      localStorage.setItem('buddyName', document.getElementById('name').value);
-      localStorage.setItem('isLoggedIn', 'true');
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ full_name, email, password, confirm_password })
+                });
 
-      document.getElementById('signupFlow').style.display = 'none';
-      document.getElementById('successView').style.display = 'block';
-
-      Buddy.celebrate();
-    });
-  </script>
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('signupFlow').style.display = 'none';
+                    document.getElementById('successView').style.display = 'block';
+                    if (typeof Buddy !== 'undefined') Buddy.celebrate();
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (err) {
+                console.error('Registration error:', err);
+                alert('Connection to server failed.');
+            }
+        });
+    </script>
 </body>
 
 </html>
