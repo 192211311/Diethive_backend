@@ -19,19 +19,19 @@
 
 import re
 import secrets
-from flask import Flask, request, jsonify, render_template, session, send_from_directory
-from werkzeug.security import generate_password_hash, check_password_hash
-import pymysql
+from flask import Flask, request, jsonify, render_template, session, send_from_directory, redirect # type: ignore
+from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
+import pymysql # type: ignore
 from datetime import datetime, timedelta, date
 import random
-from flask_mail import Mail, Message
-from apscheduler.schedulers.background import BackgroundScheduler
-import google.generativeai as genai
+from flask_mail import Mail, Message # type: ignore
+from apscheduler.schedulers.background import BackgroundScheduler # type: ignore
+import google.generativeai as genai # type: ignore
 
 # ==========================================================
 # ✅ APP INIT
 # ==========================================================
-app = Flask(__name__, static_folder='backend', static_url_path='')
+app = Flask(__name__, static_folder='Web_application', static_url_path='')
 app.secret_key = "supersecretkey"
 
 # ==========================================================
@@ -166,9 +166,11 @@ def register():
     if not full_name or not email or not password or not confirm_password:
         return jsonify({"status": "error", "message": "All fields are required"}), 400
 
+    full_name = full_name or ""
     if not re.match(r"^[A-Za-z\s]+$", full_name):
         return jsonify({"status": "error", "message": "Full name must contain only letters and spaces"}), 400
 
+    email = email or ""
     email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
     if not re.match(email_pattern, email):
         return jsonify({"status": "error", "message": "Invalid email format"}), 400
@@ -216,6 +218,7 @@ def login():
     if not email or not password:
         return jsonify({"status": "error", "message": "Email and password are required"}), 400
 
+    email = email or ""
     email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
     if not re.match(email_pattern, email):
         return jsonify({"status": "error", "message": "Invalid email format"}), 400
@@ -470,8 +473,11 @@ def get_notification_settings():
                 }
                 
             # Convert boolean from tinyint
-            settings["daily_enabled"] = bool(settings.get("daily_enabled", True))
-            settings["monthly_enabled"] = bool(settings.get("monthly_enabled", True))
+            if isinstance(settings, dict):
+                settings.update({
+                    "daily_enabled": bool(settings.get("daily_enabled", True)),
+                    "monthly_enabled": bool(settings.get("monthly_enabled", True))
+                })
             
             return jsonify({"status": "success", "settings": settings}), 200
     finally:
@@ -818,7 +824,9 @@ def my_goals_list():
             tracker_map = {}
             for tr in tracker_rows:
                 gid = tr["goal_id"]
-                tracker_map.setdefault(gid, []).append({
+                if gid not in tracker_map:
+                    tracker_map[gid] = []
+                tracker_map[gid].append({
                     "day_number": tr["day_number"],
                     "completed": bool(tr["completed"])
                 })
@@ -973,7 +981,7 @@ def get_trophy_room():
                 WHERE ug.user_id = %s AND gdt.completed = 1
             """, (user_id_param,))
             row = cursor.fetchone()
-            total_completed_days = row["completed_days"] if row and row["completed_days"] else 0
+            total_completed_days = int(row["completed_days"]) if row and row["completed_days"] else 0
 
             # Calculate user streak based on consecutive completed days (or just use total_completed_days)
             user_level = total_completed_days // 7  # 1 level per 7 days completed
@@ -995,7 +1003,8 @@ def get_trophy_room():
             ]
 
             for t in trophies:
-                t["unlocked"] = bool(user_level >= t["required_level"])
+                req_level = int(t["required_level"])  # type: ignore
+                t["unlocked"] = bool(user_level >= req_level)
 
         return jsonify({
             "status": "success",
@@ -1475,7 +1484,6 @@ def streak_remove():
         }), 200
     finally:
         conn.close()
-from flask import redirect
 
 @app.before_request
 def redirect_html():
@@ -1490,6 +1498,7 @@ def redirect_html():
 # --------------------------------------------------
 # Web Render
 # --------------------------------------------------
+from flask import send_from_directory # type: ignore
 @app.route("/index", methods=["GET"])
 def index(): return send_from_directory(app.static_folder, 'index.html')
 
@@ -1574,6 +1583,8 @@ def enable_daily():
         return jsonify({"status": "error", "message": "user_id & time required"}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB connection failed"}), 500
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -1600,6 +1611,8 @@ def enable_monthly_flexible():
         return jsonify({"status": "error", "message": "user_id, day & time required"}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB connection failed"}), 500
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -1625,6 +1638,8 @@ def disable_notification():
         return jsonify({"status": "error", "message": "user_id & type required"}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB connection failed"}), 500
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -1646,6 +1661,8 @@ def get_notifications():
         return jsonify({"status": "error", "message": "user_id is required"}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB connection failed"}), 500
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -1665,6 +1682,8 @@ def get_notifications():
 @app.route("/delete-notification/<int:notification_id>", methods=["DELETE"])
 def delete_notification(notification_id):
     conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB connection failed"}), 500
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM notifications WHERE id = %s", (notification_id,))
@@ -1814,6 +1833,9 @@ def buddy_chat():
 
     if not user_message:
         return jsonify({"status": "error", "message": "Message is required"}), 400
+
+    if not isinstance(history, list):
+        history = []
 
     try:
         model = genai.GenerativeModel(
